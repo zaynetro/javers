@@ -5,7 +5,9 @@ import org.javers.core.diff.changetype.map.EntryAdded
 import org.javers.core.diff.changetype.map.EntryRemoved
 import org.javers.core.diff.changetype.map.EntryValueChange
 import org.javers.core.metamodel.property.Property
+import org.javers.core.model.DummyAddress
 import org.javers.core.model.DummyUser
+import org.javers.core.model.SnapshotEntity
 import org.joda.time.LocalDateTime
 import spock.lang.Unroll
 
@@ -103,5 +105,29 @@ class MapChangeAppenderTest extends AbstractDiffAppendersTest {
         entryValueChanged.key == "some"
         entryValueChanged.leftValue ==   dayOne
         entryValueChanged.rightValue ==  dayTwo
+    }
+
+    @Unroll
+    def "should detect value changes in map of ValueObjects "() {
+        def javers = org.javers.core.JaversBuilder.javers().build()
+        given:
+        def left = new SnapshotEntity(mapPrimitiveToVO: leftMap)
+        def right = new SnapshotEntity(mapPrimitiveToVO: rightMap)
+
+        when:
+        def diff = javers.compare(left, right)
+
+        then:
+        println diff
+        diff.changes.size() == extpectedChanges
+
+        where:
+        leftMap << [["New York" : new DummyAddress(city: "New York", street: "Maple St")],
+                    ["New York" : new DummyAddress(city: "New York", street: "Maple St"),"Alabama": new DummyAddress(city: "Buffalo", street: "Maple St")],
+                    [:]]
+        rightMap << [["New York":new DummyAddress(city: "New York", street: "Troy Ave")],
+                     ["New York":new DummyAddress(city: "New York", street: "Maple St"),"Toronto":  new DummyAddress(city: "Buffalo", street: "Maple St")],
+                     ["New York":new DummyAddress(city: "New York", street: "Maple St")]]
+        extpectedChanges << [2, 1, 1]
     }
 }
