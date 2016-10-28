@@ -491,4 +491,25 @@ abstract class ObjectGraphBuilderTest extends Specification {
         then:
         assertThat(node).hasNoEdges()
     }
+
+    @Unroll
+    def "should gracefully handle null in map's #testCase"() {
+        given:
+        ObjectGraphBuilder graphBuilder = newBuilder()
+
+        when:
+        graphBuilder.buildGraph(snapshot)
+
+        then:
+        Exception e = thrown()
+        assert !(e instanceof NullPointerException)
+
+        where:
+        testCase << ['key', 'value']
+        snapshot << [
+            new SnapshotEntity(mapOfEntities: [(null) : new SnapshotEntity(id:1)]),
+            new SnapshotEntity(mapOfEntities: [(new SnapshotEntity(id:1)) : null])
+        ]
+    }
+
 }
